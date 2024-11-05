@@ -121,7 +121,7 @@ private:
    class BNode;
    BNode * root;              // root node of the binary search tree
    size_t numElements;        // number of elements currently in the tree
-   void copyTree(typename BST<T>::BNode* srcNode, typename BST<T>::BNode*& destNode);
+   void assign(typename BST<T>::BNode* srcNode, typename BST<T>::BNode*& destNode);
    void   clear(BNode* node) noexcept;
  
 
@@ -321,8 +321,10 @@ BST <T> :: BST(BST <T> && rhs)
 template <typename T>
 BST <T> ::BST(const std::initializer_list<T>& il)
 {
-   numElements = 99;
-   root = new BNode;
+   numElements = 0;
+   root = nullptr;
+
+   *this = il;
 }
 
 /*********************************************
@@ -353,7 +355,7 @@ BST<T>& BST<T>::operator=(const BST& rhs)
     }
 
     // Step 2: Reuse the existing nodes in the destination tree by updating their data
-    copyTree(rhs.root, root);
+    assign(rhs.root, root);
 
     // Step 3: Copy the number of elements from rhs
     numElements = rhs.numElements;
@@ -362,11 +364,11 @@ BST<T>& BST<T>::operator=(const BST& rhs)
 }
 
 /*********************************************
- * BST :: COPYTREE
+ * BST :: ASSIGN
  * Reuse nodes or create new ones in the destination tree based on the source
  ********************************************/
 template <typename T>
-void BST<T>::copyTree(typename BST<T>::BNode* srcNode, typename BST<T>::BNode*& destNode)
+void BST<T>::assign(typename BST<T>::BNode* srcNode, typename BST<T>::BNode*& destNode)
 {
     if (srcNode == nullptr) {
        clear(destNode);
@@ -385,8 +387,8 @@ void BST<T>::copyTree(typename BST<T>::BNode* srcNode, typename BST<T>::BNode*& 
     }
 
     // Recursively copy the left and right children
-    copyTree(srcNode->pLeft, destNode->pLeft);
-    copyTree(srcNode->pRight, destNode->pRight);
+    assign(srcNode->pLeft, destNode->pLeft);
+    assign(srcNode->pRight, destNode->pRight);
 
     // Ensure parent pointers are updated after changing the subtrees
     if (destNode->pLeft) destNode->pLeft->pParent = destNode;
@@ -398,14 +400,22 @@ void BST<T>::copyTree(typename BST<T>::BNode* srcNode, typename BST<T>::BNode*& 
  * BST :: ASSIGNMENT OPERATOR with INITIALIZATION LIST
  * Copy nodes onto a BTree
  ********************************************/
+
 template <typename T>
-BST <T> & BST <T> :: operator = (const std::initializer_list<T>& il)
+BST<T>& BST<T>::operator=(const std::initializer_list<T>& il)
 {
-   for (const T& t : il) {
-      insert(t);
-   }
-   return *this;
+    // Step 1: Clear the current tree
+    clear();
+
+    // Step 2: Insert each element from the initializer list into the BST
+    for (const T& value : il)
+    {
+        insert(value);  // Assumes insert() is implemented to add elements to the BST
+    }
+
+    return *this;
 }
+
 
 /*********************************************
  * BST :: ASSIGN-MOVE OPERATOR
@@ -417,11 +427,11 @@ BST <T> & BST <T> :: operator = (BST <T> && rhs)
     if (this == &rhs)  // Self-assignment check
         return *this;
 
-    clear();
+   clear();
 
    swap(rhs);
 
-    return *this;
+   return *this;
 }
 
 /*********************************************
